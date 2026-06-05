@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>xAI → Hermes URL Helper</title>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+    label { font-weight: 600; display: block; margin-top: 1rem; }
+    textarea, input { width: 100%; box-sizing: border-box; font-family: monospace; padding: 0.5rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; font-size: 1rem; cursor: pointer; }
+    .output { margin-top: 1.5rem; padding: 0.75rem; background: #f5f5f7; border-radius: 4px; }
+    .small { font-size: 0.85rem; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>xAI → Hermes URL Helper</h1>
+  <p class="small">
+    Paste the <strong>x.ai consent URL</strong> and the <strong>code</strong> shown on the page.
+    This tool will build the <code>?code=...&amp;state=...</code> fragment and full callback URL.
+  </p>
+
+  <label for="consentUrl">Consent URL from browser (https://accounts.x.ai/oauth2/consent?...)</label>
+  <textarea id="consentUrl" rows="4" placeholder="Paste the full consent URL here"></textarea>
+
+  <label for="code">Authorization code from xAI page</label>
+  <input id="code" type="text" placeholder="Paste the long code here">
+
+  <button id="buildBtn">Build Hermes Values</button>
+
+  <div class="output" id="output" style="display:none;">
+    <p><strong>Bare fragment (paste this into Hermes):</strong></p>
+    <pre id="fragment"></pre>
+
+    <p><strong>Full callback URL:</strong></p>
+    <pre id="callbackUrl"></pre>
+
+    <p class="small">
+      Tip: Hermes usually wants the bare fragment. If it asks for a full callback URL,
+      use the callback URL instead.
+    </p>
+  </div>
+
+  <script>
+    function getQueryParam(url, name) {
+      try {
+        const u = new URL(url);
+        return u.searchParams.get(name);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    document.getElementById('buildBtn').addEventListener('click', function () {
+      const consentUrl = document.getElementById('consentUrl').value.trim();
+      const code = document.getElementById('code').value.trim();
+
+      if (!consentUrl || !code) {
+        alert('Please paste both the consent URL and the code.');
+        return;
+      }
+
+      const state = getQueryParam(consentUrl, 'state');
+      const redirectUriEncoded = getQueryParam(consentUrl, 'redirect_uri');
+
+      if (!state) {
+        alert('Could not find state=... in the consent URL.');
+        return;
+      }
+      if (!redirectUriEncoded) {
+        alert('Could not find redirect_uri=... in the consent URL.');
+        return;
+      }
+
+      const redirectUri = decodeURIComponent(redirectUriEncoded);
+
+      const fragment = `?code=${code}&state=${state}`;
+      const callbackUrl = `${redirectUri}${fragment}`;
+
+      document.getElementById('fragment').textContent = fragment;
+      document.getElementById('callbackUrl').textContent = callbackUrl;
+      document.getElementById('output').style.display = 'block';
+    });
+  </script>
+</body>
+</html>
